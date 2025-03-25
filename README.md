@@ -1,3 +1,12 @@
+# Custom NextJS 15 Session Managemnt
+
+This repo has been setup by following these instructions:
+
+1. Getting started with [Drizzle + Neon](https://orm.drizzle.team/docs/get-started/neon-new)
+2. Lucia instructions for [Sessions with Drizzle ORM](https://lucia-auth.com/sessions/basic-api/drizzle-orm)
+
+---
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
