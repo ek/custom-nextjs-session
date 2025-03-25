@@ -1,6 +1,7 @@
+"use client"
+import { useRef } from 'react'
 import Form from 'next/form'
 import { submitOTP } from './actions'
-
 import {
   InputOTP,
   InputOTPGroup,
@@ -11,15 +12,31 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
 export default function CheckYourEmail() {
+  // Create a reference to the hidden input
+  const otpInputRef = useRef<HTMLInputElement>(null);
+  
   return (
     <Card className="max-w-md mx-auto p-6 mt-10 shadow-md">
       <h1 className="font-semibold">Check Your Email for your one-time login code</h1>
       <p>Please enter the 6-digit code we sent to your email address.</p>
       
       <Form action={submitOTP}>
-        {/* First flex container for the OTP input */}
+        {/* Hidden input to store the combined OTP value */}
+        <input 
+          type="hidden" 
+          id="otp" 
+          name="otp" 
+          ref={otpInputRef}
+        />
+        
+        {/* OTP Input (client-side only) */}
         <div className="flex justify-center mt-4">
-          <InputOTP maxLength={6}>
+          <InputOTP maxLength={6} onChange={(value) => {
+            // Update the hidden input when OTP changes
+            if (otpInputRef.current) {
+              otpInputRef.current.value = value;
+            }
+          }}>
             <InputOTPGroup>
               <InputOTPSlot index={0} />
               <InputOTPSlot index={1} />
@@ -34,7 +51,6 @@ export default function CheckYourEmail() {
           </InputOTP>
         </div>
         
-        {/* Second flex container for the button */}
         <div className="flex justify-center mt-4">
           <Button type="submit">Submit</Button>
         </div>

@@ -4,7 +4,7 @@ import { sha256 } from "@oslojs/crypto/sha2";
 
 import { db } from "@/db/db-config";
 import { userTable, sessionTable } from "@/db/schema";
-import type { User, Session } from "@/db/schema";
+import type { User, Session } from "@/db/types";
 
 /**
  * Generates a cryptographically secure random session token.
@@ -28,6 +28,7 @@ export function generateSessionToken(): string {
     return token;
 }
 
+
 /**
  * Creates a new session in the database for a given user.
  * 
@@ -42,15 +43,19 @@ export function generateSessionToken(): string {
  * @param {number} userId - The ID of the user this session belongs to
  * @returns {Promise<Session>} The newly created session object
  */
-export async function createSession(token: string, userId: number): Promise<Session> {
-    const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
-    const session: Session = {
-        id: sessionId,
-        userId,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30)
-    };
-    await db.insert(sessionTable).values(session);
-    return session;
+export async function createSession(token: string, userId: string): Promise<Session> {
+  // Hash the token to create the session ID
+  const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
+  
+  // Create a new session
+  const session = {
+    id: sessionId,
+    userId,
+    expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30) // 30 days
+  };
+  
+  await db.insert(sessionTable).values(session);
+  return session;
 }
 
 /**
@@ -132,10 +137,10 @@ export async function invalidateSession(sessionId: string): Promise<void> {
  * - Account deletion
  * - Forcing a user to log out from all devices
  * 
- * @param {number} userId - The ID of the user whose sessions should be invalidated
+ * @param {string} userId - The ID of the user whose sessions should be invalidated
  * @returns {Promise<void>}
  */
-export async function invalidateAllSessions(userId: number): Promise<void> {
+export async function invalidateAllSessions(userId: string): Promise<void> {
     await db.delete(sessionTable).where(eq(sessionTable.userId, userId));
 }
 

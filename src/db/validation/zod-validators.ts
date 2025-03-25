@@ -38,7 +38,7 @@ export const otpUpdateSchema = createUpdateSchema(otpCodeTable, {
  */
 export const sessionSelectSchema = createSelectSchema(sessionTable);
 export const sessionInsertSchema = createInsertSchema(sessionTable, {
-  id: z.string().uuid().optional(),
+  id: z.string(), // Use string instead of UUID
   userId: z.string().uuid(),
   expiresAt: z.date()
 });

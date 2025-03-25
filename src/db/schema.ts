@@ -32,7 +32,8 @@ export const otpCodeTable = pgTable("otp_code", {
 ]);
 
 export const sessionTable = pgTable("session", {
-  id: uuid('id').primaryKey().defaultRandom(),
+  // Change from uuid to text to support SHA-256 hash storage
+  id: text('id').primaryKey(),
   userId: uuid("user_id")
     .notNull()
     .references(() => userTable.id),
