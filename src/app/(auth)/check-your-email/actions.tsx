@@ -16,7 +16,6 @@ import { extractOTPFromForm } from '@/lib/otp-utils';
  */
 export async function submitOTP(formData: FormData) {
   try {
-    console.log('submitOTP:', formData);
     // Step 1: Extract and validate OTP from form
     const code = extractOTPFromForm(formData);
     if (!code) {
@@ -30,11 +29,14 @@ export async function submitOTP(formData: FormData) {
     }
     
     // Step 3: Create session and set cookie
-    // Now TypeScript knows result.user exists and has an id property
     await createUserSession(result.user.id);
     
-    // Step 4: Clean up used OTP codes (security best practice)
-    await removeUserOTPCodes(result.user.id);
+    // Step 4: Clean up used OTP codes and verify deletion
+    const deletionResult = await removeUserOTPCodes(result.user.id);
+    if (!deletionResult.success) {
+      console.error('OTP deletion issue:', deletionResult.error);
+      // Continue even if deletion failed, but log the issue
+    }
     
   } catch (error) {
     console.error('Error in submitOTP:', error);

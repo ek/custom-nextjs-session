@@ -1,5 +1,5 @@
 import { generateRandomString, alphabet } from 'oslo/crypto'
-import { eq, desc } from 'drizzle-orm'
+import { eq, desc, sql } from 'drizzle-orm'
 
 import { userTable, otpCodeTable } from '@/db/schema';
 import type { 
@@ -174,11 +174,82 @@ export async function verifyOTP(code: string, expirationMinutes = 15): Promise<O
 }
 
 /**
- * Removes all OTP codes for a given user (after successful verification)
+ * Removes all OTP codes for a given user and verifies they were deleted
  * 
  * @param userId The ID of the user whose OTP codes should be removed
+ * @returns Object with deletion status information
  */
-export async function removeUserOTPCodes(userId: string): Promise<void> {
-  await db.delete(otpCodeTable)
-    .where(eq(otpCodeTable.userId, userId));
+export async function removeUserOTPCodes(userId: string): Promise<{ 
+  success: boolean; 
+  deletedCount?: number;
+  initialCount?: number;
+  remainingCount?: number;
+  error?: string;
+}> {
+  try {
+    // Count how many OTP codes exist before deletion
+    const beforeCount = await db
+      .select({ count: sql`count(*)` })
+      .from(otpCodeTable)
+      .where(eq(otpCodeTable.userId, userId));
+    
+    const initialCount = Number(beforeCount[0]?.count || 0);
+    
+    // If no codes exist, return early
+    if (initialCount === 0) {
+      console.log(`No OTP codes to delete for user ${userId}`);
+      return { 
+        success: true, 
+        initialCount,
+        deletedCount: 0,
+        remainingCount: 0
+      };
+    }
+    
+    // Delete all OTP codes for this user
+    const result = await db.delete(otpCodeTable)
+      .where(eq(otpCodeTable.userId, userId))
+      .returning();
+    
+    const deletedCount = result.length;
+    
+    // Verify deletion by checking if any codes remain
+    const afterCheck = await db
+      .select({ code: otpCodeTable.code })
+      .from(otpCodeTable)
+      .where(eq(otpCodeTable.userId, userId))
+      .limit(1);
+    
+    const remainingCount = afterCheck.length;
+    
+    // Verify that the number deleted matches what we expected to delete
+    if (deletedCount !== initialCount) {
+      console.warn(`Expected to delete ${initialCount} OTP codes but deleted ${deletedCount}`);
+    }
+    
+    if (remainingCount > 0) {
+      console.error(`Failed to delete all OTP codes for user ${userId}. ${remainingCount} codes remain.`);
+      return { 
+        success: false,
+        initialCount,
+        deletedCount,
+        remainingCount,
+        error: 'Failed to delete all OTP codes' 
+      };
+    }
+    
+    console.log(`Successfully deleted ${deletedCount} of ${initialCount} OTP codes for user ${userId}`);
+    return { 
+      success: true,
+      initialCount,
+      deletedCount,
+      remainingCount: 0
+    };
+  } catch (error) {
+    console.error('Error removing OTP codes:', error);
+    return { 
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error during OTP deletion'
+    };
+  }
 }

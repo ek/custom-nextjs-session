@@ -1,7 +1,10 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import Form from 'next/form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { validateSessionToken } from '@/lib/session';
+import { logout } from './actions';
 
 export default async function Dashboard() {
   // Get the session cookie
@@ -23,7 +26,14 @@ export default async function Dashboard() {
   
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <Form action={logout}>
+          <Button type="submit" variant="outline" className="px-4">
+            Log out
+          </Button>
+        </Form>
+      </div>
       
       <Card className="mb-6">
         <CardHeader>
@@ -44,8 +54,7 @@ export default async function Dashboard() {
         </CardContent>
       </Card>
       
-      <p>Welcome to your dashboard</p>
-      <p>Here you can view your account information and settings.</p>
+      <p>Welcome to your dashboard! You are now logged in.</p>
     </div>
   );
 }
