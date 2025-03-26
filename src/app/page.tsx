@@ -12,7 +12,9 @@ export default function Home() {
         
         <p className="text-xl text-center max-w-3xl text-muted-foreground">
           A secure, production-ready implementation of stateful session management 
-          with passwordless email authentication. This is a learning project, meant to implement the knowledge shared from <Link href="https://lucia-auth.com/" className="underline">Lucia Auth</Link> learning resource and OWASP security best practices.
+          with passwordless email authentication.
+          <br /><br />
+          This is a learning project, meant to implement the knowledge shared from <Link href="https://lucia-auth.com/" className="underline">Lucia Auth</Link> learning resource and OWASP security best practices.
         </p>
         
         <div className="bg-muted/40 p-4 rounded-md max-w-3xl text-center">
