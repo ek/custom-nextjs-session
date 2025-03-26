@@ -120,7 +120,7 @@ export default function Home() {
               Try the Demo
             </Button>
           </Link>
-          <Link href="https://github.com/yourusername/custom-nextjs-session" target="_blank">
+          <Link href="https://github.com/ek/custom-nextjs-session" target="_blank">
             <Button size="lg" variant="outline" className="px-8">
               View Source
             </Button>
