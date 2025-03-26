@@ -1,23 +1,22 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Form from 'next/form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { validateSessionToken } from '@/lib/session';
 import { logout } from './actions';
+import { getSessionCookie } from '@/lib/cookie-utils';
 
 export default async function Dashboard() {
-  // Get the session cookie
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('session');
+  // Get the session cookie using the utility function
+  const sessionToken = await getSessionCookie();
   
   // If no session cookie, redirect to login
-  if (!sessionCookie?.value) {
+  if (!sessionToken) {
     redirect('/login');
   }
   
   // Validate the session and get user info
-  const { user, session } = await validateSessionToken(sessionCookie.value);
+  const { user, session } = await validateSessionToken(sessionToken);
   
   // If session is invalid, redirect to login
   if (!user) {

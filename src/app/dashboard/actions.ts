@@ -1,9 +1,9 @@
 'use server'
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { encodeHexLowerCase } from "@oslojs/encoding";
 import { sha256 } from "@oslojs/crypto/sha2";
 import { invalidateSession } from '@/lib/session';
+import { getSessionCookie, clearSessionCookie } from '@/lib/cookie-utils';
 
 /**
  * Logs the user out by:
@@ -13,18 +13,17 @@ import { invalidateSession } from '@/lib/session';
  * 4. Redirecting to the login page
  */
 export async function logout() {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('session');
+  const sessionToken = await getSessionCookie();
   
-  if (sessionCookie?.value) {
+  if (sessionToken) {
     // Convert token to session ID 
-    const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(sessionCookie.value)));
+    const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(sessionToken)));
     
     // Invalidate the session in the database
     await invalidateSession(sessionId);
     
-    // Delete the session cookie
-    cookieStore.delete('session');
+    // Delete the session cookie using the centralized util
+    await clearSessionCookie();
   }
   
   // Redirect to login page
