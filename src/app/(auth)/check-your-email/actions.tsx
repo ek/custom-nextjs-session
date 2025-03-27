@@ -1,9 +1,11 @@
 'use server'
 import { redirect } from 'next/navigation';
 
-import { verifyOTP, removeUserOTPCodes } from '@/lib/otp-code';
+// Updated imports
+import { verifyOTP } from '@/lib/otp/verification';
+import { removeUserOTPCodes } from '@/lib/otp/cleanup';
 import { createUserSession } from '@/lib/session-utils';
-import { extractOTPFromForm } from '@/lib/otp-utils';
+import { extractOTPFromForm } from '@/lib/otp/utils';
 
 /**
  * Verifies OTP code and creates a user session

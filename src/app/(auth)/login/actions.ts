@@ -5,64 +5,18 @@ import { Resend } from 'resend';
 
 import { createUserAndOTP } from '@/lib/otp-code';
 import { EmailTemplate } from '@/components/email-template';
+import { extractEmail } from '@/lib/email-utils';
+import type { EmailValidationResult } from '@/lib/email-utils';
 
 config({ path: '.env.local' });
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const emailRegex = new RegExp('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
-
-/**
- * Extract and validate email from form data
- */
-function extractEmail(formData: FormData): string {
-  const email = formData.get('email');
-  
-  // Check if the email is missing
-  if (!email) {
-    redirect('/login?error=missing-email');
-  }
-  
-  // Type check to ensure email is a string
-  if (typeof email !== 'string') {
-    redirect('/login?error=invalid-email-format');
-  }
-  
-  // Trim the email to remove leading/trailing whitespace
-  const trimmedEmail = email.trim();
-  if (trimmedEmail === '') {
-    redirect('/login?error=empty-email');
-  }
-  
-  // Validate the email format
-  if (!emailRegex.test(trimmedEmail)) {
-    redirect('/login?error=invalid-email');
-  }
-  
-  return trimmedEmail;
-}
-
-/**
- * Generate OTP and associate with user
- */
-async function generateUserOTP(email: string): Promise<{ code: string; userId: string }> {
-  try {
-    const otpEntry = await createUserAndOTP(email);
-    
-    if (!otpEntry.code) {
-      redirect('/login?error=otp-generation-failed');
-    }
-    
-    return otpEntry;
-  } catch (error) {
-    console.error('Error generating OTP:', error);
-    redirect('/login?error=otp-generation-failed');
-  }
-}
 
 /**
  * Send OTP email to user
+ * Returns success boolean instead of redirecting
  */
-async function sendOTPEmail(email: string, otpCode: string): Promise<void> {
+async function sendOTPEmail(email: string, otpCode: string): Promise<boolean> {
   try {
     const emailContent = await EmailTemplate({ otpCode });
     const { error, data } = await resend.emails.send({
@@ -74,13 +28,14 @@ async function sendOTPEmail(email: string, otpCode: string): Promise<void> {
     
     if (error) {
       console.error('Email sending error:', error);
-      redirect('/login?error=email-send-failed');
+      return false;
     }
     
     console.log('Email sent successfully:', data);
+    return true;
   } catch (error) {
     console.error('Error sending email:', error);
-    redirect('/login?error=email-send-failed');
+    return false;
   }
 }
 
@@ -89,15 +44,51 @@ async function sendOTPEmail(email: string, otpCode: string): Promise<void> {
  */
 export async function submitLogin(formData: FormData) {
   // Step 1: Extract and validate email
-  const email = extractEmail(formData);
+  const validation: EmailValidationResult = extractEmail(formData);
   
-  // Step 2: Generate OTP and create/find user
-  const { code } = await generateUserOTP(email);
+  // Handle validation errors
+  if (!validation.success) {
+    console.log(`Email validation failed: ${validation.error}`);
+    redirect(`/login?error=${validation.code}`);
+  }
   
-  // Step 3: Send email with OTP
-  await sendOTPEmail(email, code);
+  // Validation succeeded
+  const email = validation.email;
   
-  // Step 4: Redirect to success page
+  // Variables to track operation status
+  let otpEntry;
+  let emailSent = false;
+  let errorType = null;
+  
+  try {
+    // Step 2: Generate OTP and create/find user
+    otpEntry = await createUserAndOTP(email);
+
+    // Check for OTP generation failure without redirecting
+    if (!otpEntry || !otpEntry.code) {
+      errorType = 'otp-generation-failed';
+      console.error('OTP generation failed');
+    } else {
+      // Step 3: Send email with OTP
+      emailSent = await sendOTPEmail(email, otpEntry.code);
+      
+      // Set error type if email sending failed
+      if (!emailSent) {
+        errorType = 'email-send-failed';
+      }
+    }
+  } catch (error) {
+    // Only actual exceptions from the code
+    console.error('Error in login process:', error);
+    errorType = 'server-error';
+  }
+  
+  // Handle all redirects outside the try-catch
+  if (errorType) {
+    redirect(`/login?error=${errorType}`);
+  }
+  
+  // Step 4: Success redirect (only reached if everything succeeded)
   redirect('/check-your-email');
 }
 

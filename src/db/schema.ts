@@ -26,7 +26,11 @@ export const otpCodeTable = pgTable("otp_code", {
   createdAt: timestamp("created_at", {
     withTimezone: true,
     mode: "date"
-  }).defaultNow().notNull()
+  }).defaultNow().notNull(),
+  expiresAt: timestamp("expires_at", {
+    withTimezone: true,
+    mode: "date"
+  }).notNull()
 }, (table) => [
   index("otp_user_id_idx").on(table.userId)
 ]);
