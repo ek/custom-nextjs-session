@@ -10,7 +10,6 @@ export type OTPVerificationSuccess = {
     email: string;
   };
   otpEntry: {
-    code: string;
     userId: string;
     createdAt: Date;
   };
