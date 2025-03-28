@@ -20,7 +20,7 @@ While excellent auth libraries like Auth.js, Clerk, and Supabase Auth exist, bui
 
 ## Live Demo
 
-Try the [live demo](https://custom-nextjs-session-demo.vercel.app/) to see the authentication flow in action.
+Try the [live demo](https://custom-nextjs-session.vercel.app) to see the authentication flow in action.
 
 ## Key Features
 
