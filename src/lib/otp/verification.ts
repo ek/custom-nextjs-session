@@ -28,13 +28,13 @@ export async function verifyOTP(code: string): Promise<OTPVerificationResult> {
     // Find the OTP entry in the database using the hashed code
     const otpEntries = await db
       .select({
-        code: otpCodeTable.code,
+        hashedCode: otpCodeTable.hashedCode,
         userId: otpCodeTable.userId,
         createdAt: otpCodeTable.createdAt,
         expiresAt: otpCodeTable.expiresAt
       })
       .from(otpCodeTable)
-      .where(eq(otpCodeTable.code, hashedCode))  // Compare with hashed code
+      .where(eq(otpCodeTable.hashedCode, hashedCode))  // Compare with hashed code
       .orderBy(desc(otpCodeTable.createdAt))
       .limit(1);
     

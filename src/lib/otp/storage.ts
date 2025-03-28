@@ -37,7 +37,7 @@ export async function findOrCreateUser(email: string): Promise<{ userId: string;
 /**
  * Store an OTP code for a user
  */
-export async function storeOTP(userId: string, hashedOtpCode: string, otpCode: string): Promise<{ code: string; userId: string }> {
+export async function storeOTP(userId: string, hashedCode: string, otpCode: string): Promise<{ code: string; userId: string }> {
   // Calculate expiration time
   const expirationTime = new Date();
   expirationTime.setMinutes(expirationTime.getMinutes() + OTP_EXPIRY_MINUTES);
@@ -52,7 +52,7 @@ export async function storeOTP(userId: string, hashedOtpCode: string, otpCode: s
 
   // Validate the OTP data - include expiresAt here
   const validatedOtpData = otpInsertSchema.parse({ 
-    code: hashedOtpCode,
+    hashedCode: hashedCode,
     userId,
     expiresAt: expirationTime
   });
@@ -63,13 +63,15 @@ export async function storeOTP(userId: string, hashedOtpCode: string, otpCode: s
       ...validatedOtpData
     })
     .returning({
-      code: otpCodeTable.code,
+      hashedCode: otpCodeTable.hashedCode,
       userId: otpCodeTable.userId
     });
   
   if(!insertedOtp) {
     throw new Error('Failed to store OTP code');
   }
+
+  // Return the original OTP code and user ID
   
   return { code: otpCode, userId: userId };
 }

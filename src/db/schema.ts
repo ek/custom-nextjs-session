@@ -22,7 +22,7 @@ export const otpCodeTable = pgTable("otp_code", {
   userId: uuid("user_id")
     .notNull()
     .references(() => userTable.id),
-  code: text("code").notNull(),
+  hashedCode: text("hashed_code").notNull(),
   createdAt: timestamp("created_at", {
     withTimezone: true,
     mode: "date"

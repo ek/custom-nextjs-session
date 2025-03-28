@@ -76,7 +76,7 @@ export async function removeUserOTPCodes(userId: string): Promise<OTPDeletionRes
     
     // Verify deletion by checking if any codes remain
     const afterCheck = await db
-      .select({ code: otpCodeTable.code })
+      .select({ hashedCode: otpCodeTable.hashedCode })
       .from(otpCodeTable)
       .where(eq(otpCodeTable.userId, userId))
       .limit(1);
