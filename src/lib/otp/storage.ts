@@ -37,7 +37,7 @@ export async function findOrCreateUser(email: string): Promise<{ userId: string;
 /**
  * Store an OTP code for a user
  */
-export async function storeOTP(userId: string, otpCode: string): Promise<{ code: string; userId: string }> {
+export async function storeOTP(userId: string, hashedOtpCode: string, otpCode: string): Promise<{ code: string; userId: string }> {
   // Calculate expiration time
   const expirationTime = new Date();
   expirationTime.setMinutes(expirationTime.getMinutes() + OTP_EXPIRY_MINUTES);
@@ -47,26 +47,29 @@ export async function storeOTP(userId: string, otpCode: string): Promise<{ code:
     await db.delete(otpCodeTable).where(eq(otpCodeTable.userId, userId));
   } catch (error) {
     console.error(`Failed to delete old OTP codes for user ${userId}:`, error);
-    // Continue with creating the new OTP - we don't need to stop the flow
+    // Continue regardless of error
   }
-  
+
   // Validate the OTP data - include expiresAt here
   const validatedOtpData = otpInsertSchema.parse({ 
-    code: otpCode, 
+    code: hashedOtpCode,
     userId,
-    expiresAt: expirationTime  // Include the expiration time here
+    expiresAt: expirationTime
   });
   
   // Store the new OTP
   const [insertedOtp] = await db.insert(otpCodeTable)
     .values({
       ...validatedOtpData
-      // No need to specify expiresAt separately as it's now part of validatedOtpData
     })
     .returning({
       code: otpCodeTable.code,
       userId: otpCodeTable.userId
     });
-    
-  return insertedOtp;
+  
+  if(!insertedOtp) {
+    throw new Error('Failed to store OTP code');
+  }
+  
+  return { code: otpCode, userId: userId };
 }

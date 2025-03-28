@@ -26,11 +26,11 @@ export const otpSelectSchema = createSelectSchema(otpCodeTable);
 export const otpInsertSchema = createInsertSchema(otpCodeTable, {
   id: z.string().uuid().optional(),
   userId: z.string().uuid(),
-  code: z.string().length(6, { message: "OTP code must be exactly 6 characters" }),
+  code: z.string().length(64, { message: "Hashed OTP code must be exactly 64 characters" }),
   createdAt: z.date().optional()
 });
 export const otpUpdateSchema = createUpdateSchema(otpCodeTable, {
-  code: z.string().length(6, { message: "OTP code must be exactly 6 characters" }).optional(),
+  code: z.string().length(64, { message: "Hashed OTP code must be exactly 64 characters" }).optional(),
 });
 
 /**
@@ -58,7 +58,7 @@ export const loginFormSchema = z.object({
  */
 export const otpVerificationSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
-  code: z.string().length(6, { message: "OTP code must be exactly 6 digits" })
+  code: z.string().length(64, { message: "Hashed OTP code must be exactly 64 characters" })
     .regex(/^\d+$/, { message: "OTP code must contain only numbers" })
 });
 

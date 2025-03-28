@@ -2,13 +2,14 @@ import { eq, desc } from 'drizzle-orm';
 import { db } from '@/db/db-config';
 import { userTable, otpCodeTable } from '@/db/schema';
 import { OTP_DIGITS } from './generator';
+import { hashOTP } from './hasher';  // Import the hasher
 import type { OTPVerificationResult } from './types';
 
 /**
  * Verifies an OTP code for validity and expiration
  * 
  * @param code The OTP code to verify
- * @returns A properly typed verification result
+ * @returns A result object typed as OTPVerificationResult
  */
 export async function verifyOTP(code: string): Promise<OTPVerificationResult> {
   try {
@@ -20,8 +21,11 @@ export async function verifyOTP(code: string): Promise<OTPVerificationResult> {
         message: 'OTP code must be a 6-digit number'
       };
     }
+
+    // Hash the OTP code - the OTP code is hashed and stored in the database
+    const hashedCode = hashOTP(code);
     
-    // Find the OTP entry in the database
+    // Find the OTP entry in the database using the hashed code
     const otpEntries = await db
       .select({
         code: otpCodeTable.code,
@@ -30,7 +34,7 @@ export async function verifyOTP(code: string): Promise<OTPVerificationResult> {
         expiresAt: otpCodeTable.expiresAt
       })
       .from(otpCodeTable)
-      .where(eq(otpCodeTable.code, code))
+      .where(eq(otpCodeTable.code, hashedCode))  // Compare with hashed code
       .orderBy(desc(otpCodeTable.createdAt))
       .limit(1);
     
